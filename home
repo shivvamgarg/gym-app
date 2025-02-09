@@ -1,0 +1,103 @@
+import { useState, useEffect } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { motion } from "framer-motion";
+import { Line } from "react-chartjs-2";
+import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement } from "chart.js";
+import useSound from "use-sound";
+
+ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement);
+
+export default function GymTrainerAI() {
+  const [day, setDay] = useState(null);
+  const [workout, setWorkout] = useState(null);
+  const [progress, setProgress] = useState(0);
+  const [streak, setStreak] = useState(0);
+  const [progressHistory, setProgressHistory] = useState([]);
+  const [customWorkout, setCustomWorkout] = useState([]);
+  const [completedExercises, setCompletedExercises] = useState(0);
+  const [restTimer, setRestTimer] = useState(0);
+  const [isResting, setIsResting] = useState(false);
+
+  const days = ["Chest", "Back", "Legs", "Arms", "Shoulders", "Full Body"];
+
+  const workouts = {
+    "Chest": ["Bench Press - 4 sets", "Incline Dumbbell Press - 4 sets", "Cable Fly - 3 sets"],
+    "Back": ["Pull-ups - 3 sets", "Deadlifts - 4 sets", "Bent-over Rows - 4 sets"],
+    "Legs": ["Squats - 4 sets", "Leg Press - 4 sets", "Lunges - 3 sets"],
+    "Arms": ["Bicep Curls - 4 sets", "Tricep Dips - 4 sets", "Hammer Curls - 3 sets"],
+    "Shoulders": ["Overhead Press - 4 sets", "Lateral Raises - 3 sets", "Face Pulls - 3 sets"],
+    "Full Body": ["Burpees - 3 sets", "Squats - 4 sets", "Deadlifts - 3 sets", "Push-ups - 4 sets"]
+  };
+
+  useEffect(() => {
+    let timer;
+    if (isResting && restTimer > 0) {
+      timer = setInterval(() => {
+        setRestTimer((prev) => prev - 1);
+      }, 1000);
+    } else if (restTimer === 0 && isResting) {
+      setIsResting(false);
+    }
+    return () => clearInterval(timer);
+  }, [isResting, restTimer]);
+
+  const handleSelectDay = (selectedDay) => {
+    setDay(selectedDay);
+    setWorkout(workouts[selectedDay]);
+    setCompletedExercises(0);
+  };
+
+  const markExerciseDone = () => {
+    if (completedExercises < workout.length) {
+      setCompletedExercises((prev) => prev + 1);
+      setProgress(((completedExercises + 1) / workout.length) * 100);
+      setIsResting(true);
+      setRestTimer(60); // 60 seconds rest between sets
+    }
+  };
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: -20 }} 
+      animate={{ opacity: 1, y: 0 }} 
+      transition={{ duration: 0.5 }}
+      className="p-6 max-w-lg mx-auto text-center"
+    >
+      <h1 className="text-2xl font-bold mb-4">🏋️ Gym Trainer AI</h1>
+      {!day ? (
+        <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} transition={{ duration: 0.3 }}>
+          <h2 className="text-lg font-semibold mb-2">What day is it?</h2>
+          <div className="flex flex-wrap justify-center gap-4">
+            {days.map((d) => (
+              <Button key={d} onClick={() => handleSelectDay(d)}>{d}</Button>
+            ))}
+          </div>
+        </motion.div>
+      ) : (
+        <Card className="p-4 shadow-lg">
+          <CardContent>
+            <h2 className="text-xl font-semibold">{day} Workout</h2>
+            <p className="mt-2">Completed: {completedExercises}/{workout.length}</p>
+            <ul className="text-left mt-2">
+              {workout.map((exercise, index) => (
+                <li key={index} className={`py-1 ${index < completedExercises ? 'text-green-500' : ''}`}>
+                  {index < completedExercises ? "✅" : "🔲"} {exercise}
+                </li>
+              ))}
+            </ul>
+            <Progress value={progress} className="mt-4" />
+            {isResting ? (
+              <p className="mt-3 text-red-500">Resting... {restTimer}s remaining</p>
+            ) : (
+              <Button onClick={markExerciseDone} className="mt-3" disabled={completedExercises >= workout.length}>
+                {completedExercises >= workout.length ? "Workout Complete!" : `Mark Exercise ${completedExercises + 1}/${workout.length} as Done`}
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      )}
+    </motion.div>
+  );
+}
