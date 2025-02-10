@@ -1,103 +1,172 @@
-import { useState, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { motion } from "framer-motion";
-import { Line } from "react-chartjs-2";
-import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement } from "chart.js";
-import useSound from "use-sound";
-
-ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement);
-
-export default function GymTrainerAI() {
-  const [day, setDay] = useState(null);
-  const [workout, setWorkout] = useState(null);
-  const [progress, setProgress] = useState(0);
-  const [streak, setStreak] = useState(0);
-  const [progressHistory, setProgressHistory] = useState([]);
-  const [customWorkout, setCustomWorkout] = useState([]);
-  const [completedExercises, setCompletedExercises] = useState(0);
-  const [restTimer, setRestTimer] = useState(0);
-  const [isResting, setIsResting] = useState(false);
-
-  const days = ["Chest", "Back", "Legs", "Arms", "Shoulders", "Full Body"];
-
-  const workouts = {
-    "Chest": ["Bench Press - 4 sets", "Incline Dumbbell Press - 4 sets", "Cable Fly - 3 sets"],
-    "Back": ["Pull-ups - 3 sets", "Deadlifts - 4 sets", "Bent-over Rows - 4 sets"],
-    "Legs": ["Squats - 4 sets", "Leg Press - 4 sets", "Lunges - 3 sets"],
-    "Arms": ["Bicep Curls - 4 sets", "Tricep Dips - 4 sets", "Hammer Curls - 3 sets"],
-    "Shoulders": ["Overhead Press - 4 sets", "Lateral Raises - 3 sets", "Face Pulls - 3 sets"],
-    "Full Body": ["Burpees - 3 sets", "Squats - 4 sets", "Deadlifts - 3 sets", "Push-ups - 4 sets"]
-  };
-
-  useEffect(() => {
-    let timer;
-    if (isResting && restTimer > 0) {
-      timer = setInterval(() => {
-        setRestTimer((prev) => prev - 1);
-      }, 1000);
-    } else if (restTimer === 0 && isResting) {
-      setIsResting(false);
-    }
-    return () => clearInterval(timer);
-  }, [isResting, restTimer]);
-
-  const handleSelectDay = (selectedDay) => {
-    setDay(selectedDay);
-    setWorkout(workouts[selectedDay]);
-    setCompletedExercises(0);
-  };
-
-  const markExerciseDone = () => {
-    if (completedExercises < workout.length) {
-      setCompletedExercises((prev) => prev + 1);
-      setProgress(((completedExercises + 1) / workout.length) * 100);
-      setIsResting(true);
-      setRestTimer(60); // 60 seconds rest between sets
-    }
-  };
-
-  return (
-    <motion.div 
-      initial={{ opacity: 0, y: -20 }} 
-      animate={{ opacity: 1, y: 0 }} 
-      transition={{ duration: 0.5 }}
-      className="p-6 max-w-lg mx-auto text-center"
-    >
-      <h1 className="text-2xl font-bold mb-4">🏋️ Gym Trainer AI</h1>
-      {!day ? (
-        <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} transition={{ duration: 0.3 }}>
-          <h2 className="text-lg font-semibold mb-2">What day is it?</h2>
-          <div className="flex flex-wrap justify-center gap-4">
-            {days.map((d) => (
-              <Button key={d} onClick={() => handleSelectDay(d)}>{d}</Button>
-            ))}
-          </div>
-        </motion.div>
-      ) : (
-        <Card className="p-4 shadow-lg">
-          <CardContent>
-            <h2 className="text-xl font-semibold">{day} Workout</h2>
-            <p className="mt-2">Completed: {completedExercises}/{workout.length}</p>
-            <ul className="text-left mt-2">
-              {workout.map((exercise, index) => (
-                <li key={index} className={`py-1 ${index < completedExercises ? 'text-green-500' : ''}`}>
-                  {index < completedExercises ? "✅" : "🔲"} {exercise}
-                </li>
-              ))}
-            </ul>
-            <Progress value={progress} className="mt-4" />
-            {isResting ? (
-              <p className="mt-3 text-red-500">Resting... {restTimer}s remaining</p>
-            ) : (
-              <Button onClick={markExerciseDone} className="mt-3" disabled={completedExercises >= workout.length}>
-                {completedExercises >= workout.length ? "Workout Complete!" : `Mark Exercise ${completedExercises + 1}/${workout.length} as Done`}
-              </Button>
-            )}
-          </CardContent>
-        </Card>
-      )}
-    </motion.div>
-  );
-}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prakriti Analysis</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 50px;
+            background: linear-gradient(to right, #ff9966, #ff5e62);
+            color: white;
+            transition: background 0.5s ease-in-out;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            box-shadow: 2px 2px 12px rgba(0, 0, 0, 0.2);
+        }
+        .welcome-container, .question-container, .result-container {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+        .show {
+            display: block;
+            opacity: 1;
+        }
+        .start-btn, .restart-btn, .share-btn {
+            padding: 12px 24px;
+            font-size: 18px;
+            border: none;
+            border-radius: 5px;
+            background: #f1c40f;
+            color: #333;
+            cursor: pointer;
+            transition: 0.3s;
+            margin: 10px;
+        }
+        .start-btn:hover, .restart-btn:hover, .share-btn:hover {
+            background: #e67e22;
+            color: white;
+        }
+        .options button {
+            display: block;
+            width: 100%;
+            margin: 10px 0;
+            padding: 12px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background: #fff;
+            color: #333;
+            transition: 0.3s;
+        }
+        .options button:hover {
+            background: #3498db;
+            color: white;
+        }
+        .progress-bar {
+            width: 100%;
+            background: white;
+            height: 8px;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        .progress {
+            height: 8px;
+            width: 0;
+            background: #f1c40f;
+            transition: width 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="welcome-container show" id="welcome">
+            <h1>Welcome to Prakriti Analysis</h1>
+            <p>Discover your Ayurvedic Dosha and get personalized recommendations.</p>
+            <button class="start-btn" onclick="startQuiz()">Start Quiz</button>
+        </div>
+        <div class="question-container" id="quiz">
+            <h2 id="question">Loading...</h2>
+            <div class="progress-bar">
+                <div class="progress" id="progress"></div>
+            </div>
+            <div class="options" id="options"></div>
+        </div>
+        <div class="result-container" id="result">
+            <h2>Your Dominant Prakriti:</h2>
+            <canvas id="chart" width="300" height="300"></canvas>
+            <p id="recommendation"></p>
+            <button class="restart-btn" onclick="restartQuiz()">Restart Quiz</button>
+            <button class="share-btn" onclick="shareResults()">Share Results</button>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        function startQuiz() {
+            document.getElementById("welcome").classList.remove("show");
+            document.getElementById("quiz").classList.add("show");
+            loadQuestion();
+        }
+        
+        function restartQuiz() {
+            document.getElementById("result").classList.remove("show");
+            document.getElementById("welcome").classList.add("show");
+            currentQuestion = 0;
+            Object.keys(scores).forEach(key => scores[key] = 0);
+        }
+        
+        function shareResults() {
+            const message = `My Prakriti Analysis Result:\nVata: ${scores.Vata}%\nPitta: ${scores.Pitta}%\nKapha: ${scores.Kapha}%\nFind out yours at [your-website-link]`;
+            const url = `https://wa.me/?text=${encodeURIComponent(message)}`;
+            window.open(url, "_blank");
+        }
+        
+        let currentQuestion = 0;
+        const scores = { Vata: 0, Pitta: 0, Kapha: 0 };
+        
+        const questions = [
+            { question: "How do you handle stress?", options: ["I get anxious", "I get irritated", "I remain calm"] },
+            { question: "What’s your energy level like?", options: ["Fluctuates a lot", "High but burns out quickly", "Steady and consistent"] },
+            { question: "How is your body temperature usually?", options: ["Cold", "Warm", "Neutral"] },
+            { question: "How do you sleep?", options: ["Light and disturbed", "Moderate", "Deep and prolonged"] }
+        ];
+        
+        function updateProgressBar() {
+            const progress = document.getElementById("progress");
+            const progressPercentage = (currentQuestion / questions.length) * 100;
+            progress.style.width = `${progressPercentage}%`;
+        }
+        
+        function loadQuestion() {
+            if (currentQuestion < questions.length) {
+                document.getElementById("question").textContent = questions[currentQuestion].question;
+                const optionsDiv = document.getElementById("options");
+                optionsDiv.innerHTML = "";
+                
+                questions[currentQuestion].options.forEach((option, index) => {
+                    const button = document.createElement("button");
+                    button.textContent = option;
+                    button.onclick = () => selectOption(index);
+                    optionsDiv.appendChild(button);
+                });
+                
+                updateProgressBar();
+            } else {
+                showResults();
+            }
+        }
+        
+        function selectOption(index) {
+            const doshaMap = ["Vata", "Pitta", "Kapha"];
+            scores[doshaMap[index]]++;
+            currentQuestion++;
+            loadQuestion();
+        }
+        
+        function showResults() {
+            document.getElementById("quiz").classList.remove("show");
+            document.getElementById("result").classList.add("show");
+        }
+    </script>
+</body>
+</html>
