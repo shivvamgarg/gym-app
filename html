@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prakriti Analysis</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 50px;
+            background: linear-gradient(to right, #ff9966, #ff5e62);
+            color: white;
+            transition: background 0.5s ease-in-out;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            box-shadow: 2px 2px 12px rgba(0, 0, 0, 0.2);
+        }
+        .welcome-container, .question-container, .result-container {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+        .show {
+            display: block;
+            opacity: 1;
+        }
+        .start-btn, .restart-btn, .share-btn {
+            padding: 12px 24px;
+            font-size: 18px;
+            border: none;
+            border-radius: 5px;
+            background: #f1c40f;
+            color: #333;
+            cursor: pointer;
+            transition: 0.3s;
+            margin: 10px;
+        }
+        .start-btn:hover, .restart-btn:hover, .share-btn:hover {
+            background: #e67e22;
+            color: white;
+        }
+        .options button {
+            display: block;
+            width: 100%;
+            margin: 10px 0;
+            padding: 12px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background: #fff;
+            color: #333;
+            transition: 0.3s;
+        }
+        .options button:hover {
+            background: #3498db;
+            color: white;
+        }
+        .progress-bar {
+            width: 100%;
+            background: white;
+            height: 8px;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        .progress {
+            height: 8px;
+            width: 0;
+            background: #f1c40f;
+            transition: width 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="welcome-container show" id="welcome">
+            <h1>Welcome to Prakriti Analysis</h1>
+            <p>Discover your Ayurvedic Dosha and get personalized recommendations.</p>
+            <button class="start-btn" onclick="startQuiz()">Start Quiz</button>
+        </div>
+        <div class="question-container" id="quiz">
+            <h2 id="question">Loading...</h2>
+            <div class="progress-bar">
+                <div class="progress" id="progress"></div>
+            </div>
+            <div class="options" id="options"></div>
+        </div>
+        <div class="result-container" id="result">
+            <h2>Your Dominant Prakriti:</h2>
+            <canvas id="chart" width="300" height="300"></canvas>
+            <p id="recommendation"></p>
+            <button class="restart-btn" onclick="restartQuiz()">Restart Quiz</button>
+            <button class="share-btn" onclick="shareResults()">Share Results</button>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        function startQuiz() {
+            document.getElementById("welcome").classList.remove("show");
+            document.getElementById("quiz").classList.add("show");
+            loadQuestion();
+        }
+        
+        function restartQuiz() {
+            document.getElementById("result").classList.remove("show");
+            document.getElementById("welcome").classList.add("show");
+            currentQuestion = 0;
+            Object.keys(scores).forEach(key => scores[key] = 0);
+        }
+        
+        function shareResults() {
+            const message = `My Prakriti Analysis Result:\nVata: ${scores.Vata}%\nPitta: ${scores.Pitta}%\nKapha: ${scores.Kapha}%\nFind out yours at [your-website-link]`;
+            const url = `https://wa.me/?text=${encodeURIComponent(message)}`;
+            window.open(url, "_blank");
+        }
+        
+        let currentQuestion = 0;
+        const scores = { Vata: 0, Pitta: 0, Kapha: 0 };
+        
+        const questions = [
+            { question: "How do you handle stress?", options: ["I get anxious", "I get irritated", "I remain calm"] },
+            { question: "What’s your energy level like?", options: ["Fluctuates a lot", "High but burns out quickly", "Steady and consistent"] },
+            { question: "How is your body temperature usually?", options: ["Cold", "Warm", "Neutral"] },
+            { question: "How do you sleep?", options: ["Light and disturbed", "Moderate", "Deep and prolonged"] }
+        ];
+        
+        function updateProgressBar() {
+            const progress = document.getElementById("progress");
+            const progressPercentage = (currentQuestion / questions.length) * 100;
+            progress.style.width = `${progressPercentage}%`;
+        }
+        
+        function loadQuestion() {
+            if (currentQuestion < questions.length) {
+                document.getElementById("question").textContent = questions[currentQuestion].question;
+                const optionsDiv = document.getElementById("options");
+                optionsDiv.innerHTML = "";
+                
+                questions[currentQuestion].options.forEach((option, index) => {
+                    const button = document.createElement("button");
+                    button.textContent = option;
+                    button.onclick = () => selectOption(index);
+                    optionsDiv.appendChild(button);
+                });
+                
+                updateProgressBar();
+            } else {
+                showResults();
+            }
+        }
+        
+        function selectOption(index) {
+            const doshaMap = ["Vata", "Pitta", "Kapha"];
+            scores[doshaMap[index]]++;
+            currentQuestion++;
+            loadQuestion();
+        }
+        
+        function showResults() {
+            document.getElementById("quiz").classList.remove("show");
+            document.getElementById("result").classList.add("show");
+        }
+    </script>
+</body>
+</html>
